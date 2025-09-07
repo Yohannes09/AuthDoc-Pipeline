@@ -72,14 +72,13 @@
       register: dockeep_clone
 
 
-    - name: Deploy Infrastructure
+    - name: Building and containerizing Infrastructure
       vars_files:
         - group_vars/infra_secrets.yml
         - group_vars/common_secrets.yml
       community.docker.docker_compose_v2:
         project_src: "{{ deployment_dir }}/infra-repo/AuthMat-DocKeep-Infrastructure"
-        files:
-          - "docker-compose.yml"
+        files: "docker-compose.yml"
         state: present  # Brings up services (use 'absent' to tear down, 'restarted' to restart)
         build: never  # Build images if 'build:' is in compose files (set to 'never' if using pre-built images)
         environment:
@@ -93,17 +92,16 @@
         remove_orphans: true  # Remove containers not defined in compose files
         wait: true  # Wait for services to be healthy
         wait_timeout: 300  # 5 minutes max wait
-      register: compose_result
+      #register: compose_result
 
 
-    - name: Deploy AuthMat
+    - name: Building and containerizing AuthMat
       vars_files:
         - group_vars/infra_secrets.yml
         - group_vars/authmat_secrets.yml
       community.docker.docker_compose_v2:
         project_src: "{{ deployment_dir }}/authmat-repo/server/Authentication-Service"
-        files:
-          - "docker-compose.yml"
+        files: "docker-compose.yml"
         state: present
         build: always
         environment:
@@ -111,6 +109,7 @@
           REDIS_HOST: "{{ infra-env-vars.redis-host }}"
           REDIS_PORT: "{{ infra-env-vars.redis-port }}"
 
+          DB_NAME: "{{ authmat-env-vars.DB_NAME }}"
           DB_URL: "{{ authmat-env-vars.DB_URL }}"
           DB_USERNAME: "{{ authmat-env-vars.DB_USERNAME }}"
           DB_PASSWORD: "{{ authmat-env-vars.DB_PASSWORD }}"
@@ -140,14 +139,13 @@
         wait_timeout: 300
 
 
-    - name: Deploy DocKeep
+    - name: Building and containerizing DocKeep
       vars_files:
         - group_vars/infra_secrets.yml
         - group_vars/dockeep_secrets.yml
       community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/dockeep-repo/server/Authentication-Service"
-        files:
-          - "docker-compose.yml"
+        project_src: "{{ deployment_dir }}/dockeep-repo/server"
+        files: "docker-compose.yml"
         state: present
         build: always
         environment:
@@ -155,6 +153,7 @@
           REDIS_HOST: "{{ infra-env-vars.redis-host }}"
           REDIS_PORT: "{{ infra-env-vars.redis-port }}"
 
+          DB_NAME: "{{ dockeep-env-vars.DB_NAME }}"
           DB_URL: "{{ dockeep-env-vars.DB_URL }}"
           DB_USERNAME: "{{ dockeep-env-vars.DB_USERNAME }}"
           DB_PASSWORD: "{{ dockeep-env-vars.DB_PASSWORD }}"
