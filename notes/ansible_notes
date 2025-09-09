@@ -33,3 +33,5 @@
 
     8. ??? Run the playbook (while in the virtual)
         ansible-playbook -i inventory.ini deploy.yml
+
+    (removes need for ansible.cfg) ansible-playbook -i inventory.ini deploy.yml --vault-id @prompt

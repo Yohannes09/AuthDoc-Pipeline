@@ -1,43 +1,23 @@
----
 - name: Deploy authmat + dockeep infra with Docker Compose
   hosts: targets  # Matches the group in inventory.ini
   become: yes  # Use sudo for tasks requiring elevated privileges (e.g., installing packages, Docker)
+  vars_files:
+    - group_vars/infra_secrets.yml
+    - group_vars/common_secrets.yml
+    - group_vars/authmat_secrets.yml
+    - group_vars/dockeep_secrets.yml
   vars:
     deployment_dir: /opt/deployment  # Directory on target host for repo clones
     infra_repo_url: https://github.com/Yohannes09/Infrastructure
     authmat_repo_url: https://github.com/Yohannes09/AuthMat
     dockeep_repo_url: https://github.com/Yohannes09/DocKeep
-    repo_branch: main  # Update with your branch name (e.g., main, master, dev)
-    compose_files:
-      - "{{ deployment_dir }}/AuthMat-DocKeep-Infrastructure/docker-compose.yml"
-      - "{{ deployment_dir }}/server/Authentication-Service/docker-compose.yml"
-      - "{{ deployment_dir }}/server/docker-compose.yml"
-    docker_network: shared-net  # Ensure all compose files use this network
+    repo_branch: main
+    docker_network: shared-net
 
   tasks:
-    # Install dependencies on Debian-based systems (skip for localhost if Docker Desktop is installed)
-    - name: Install Docker, Compose, and Git on Debian-based systems
-      apt:
-        name:
-          - docker.io
-          - docker-compose-v2  # Docker Compose CLI plugin
-          - git
-        state: present
-        update_cache: yes
-      when: ansible_os_family == 'Debian'  # Adjust for RedHat (use yum/dnf) or skip for macOS
-
-    # Ensure Docker service is running
-    - name: Ensure Docker is running
-      service:
-        name: docker
-        state: started
-        enabled: yes
-      when: ansible_os_family != 'Darwin'  # Skip for macOS (Docker Desktop handles this)
-
-    # For macOS localhost, ensure Docker Desktop is running (optional, manual step)
-    # - name: Ensure Docker Desktop is running on macOS
-    #   command: open -a Docker
-    #   when: ansible_os_family == 'Darwin'
+    - name: Ensure Docker Desktop is running on macOS
+      command: open -a Docker
+      when: ansible_os_family == 'Darwin'
 
     - name: Create deployment directory
       file:
@@ -73,41 +53,37 @@
 
 
     - name: Building and containerizing Infrastructure
-      vars_files:
-        - group_vars/infra_secrets.yml
-        - group_vars/common_secrets.yml
       community.docker.docker_compose_v2:
         project_src: "{{ deployment_dir }}/infra-repo/AuthMat-DocKeep-Infrastructure"
-        files: "docker-compose.yml"
+        files:
+          - "docker-compose.yml"
         state: present  # Brings up services (use 'absent' to tear down, 'restarted' to restart)
-        build: never  # Build images if 'build:' is in compose files (set to 'never' if using pre-built images)
+        build: never
         environment:
-          REDIS_IMAGE: "{{ common_docker_env_vars.redis-image }}"
-          REDIS_PORT: "{{ infra-env-vars.redis-port }}"
-          KAFKA_IMAGE: "{{ common_docker_env_vars.kafka-image }}"
-          KAFKA_PORT: "{{ infra-env-vars.kafka-port }}"
+          REDIS_IMAGE: "{{ infra_env_vars.REDIS_IMAGE }}"
+          REDIS_PORT: "{{ infra_env_vars.REDIS_PORT }}"
+          KAFKA_IMAGE: "{{ infra_env_vars.KAFKA_IMAGE }}"
+          KAFKA_PORT: "{{ infra_env_vars.KAFKA_PORT }}"
 
-        pull: missing  # Pull images if not present (set to 'always' for fresh pulls)
-        recreate: auto  # Recreate containers if config changes
+        pull: missing
+        recreate: auto
         remove_orphans: true  # Remove containers not defined in compose files
         wait: true  # Wait for services to be healthy
         wait_timeout: 300  # 5 minutes max wait
-      #register: compose_result
+      register: compose_result
 
 
     - name: Building and containerizing AuthMat
-      vars_files:
-        - group_vars/infra_secrets.yml
-        - group_vars/authmat_secrets.yml
       community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/authmat-repo/server/Authentication-Service"
-        files: "docker-compose.yml"
+        project_src: "{{ deployment_dir }}/authmat-repo/"
+        files:
+          - "docker-compose.yml"
         state: present
         build: always
         environment:
           KAFKA_BOOTSTRAP_SERVERS: "{{ infra-env-vars.kafka-host }}:{{ infra-env-vars.kafka-port }}"
           REDIS_HOST: "{{ infra-env-vars.redis-host }}"
-          REDIS_PORT: "{{ infra-env-vars.redis-port }}"
+          REDIS_PORT: "{{ infra_env_vars.REDIS_PORT }}"
 
           DB_NAME: "{{ authmat-env-vars.DB_NAME }}"
           DB_URL: "{{ authmat-env-vars.DB_URL }}"
@@ -140,12 +116,10 @@
 
 
     - name: Building and containerizing DocKeep
-      vars_files:
-        - group_vars/infra_secrets.yml
-        - group_vars/dockeep_secrets.yml
       community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/dockeep-repo/server"
-        files: "docker-compose.yml"
+        project_src: "{{ deployment_dir }}/dockeep-repo/"
+        files:
+          - "docker-compose.yml"
         state: present
         build: always
         environment:
@@ -179,6 +153,7 @@
       command: docker ps
       register: docker_output
       failed_when: docker_output.rc != 0
+
 
     - name: Display running containers
       debug:
