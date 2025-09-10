@@ -6,7 +6,23 @@ services:
       - "${REDIS_PORT}:6379"
 
   kafka:
-    restart: always
+    container_name: kafka
     image: ${KAFKA_IMAGE}
+    restart: unless-stopped
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
     ports:
       - "${KAFKA_PORT}:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+volumes:
+  kafka_data:
+    driver: local

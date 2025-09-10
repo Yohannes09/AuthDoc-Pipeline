@@ -8,15 +8,18 @@
   vars:
     deployment_dir: /opt/deployment  # Directory on target host for repo clones
     infra_repo_url: https://github.com/Yohannes09/Infrastructure
+    infra_repo_dir: "{{ deployment_dir }}/infra"
     authmat_repo_url: https://github.com/Yohannes09/AuthMat
+    authmat_repo_dir: "{{ deployment_dir }}/auth"
     dockeep_repo_url: https://github.com/Yohannes09/DocKeep
+    dockeep_repo_dir: "{{ deployment_dir }}/doc"
     repo_branch: main
     docker_network: shared-net
     kafka_bootstrap_server: "{{ KAFKA_HOST }}:{{ KAFKA_PORT }}"
 
 
   tasks:
-    - name: Install Docker, Compose, and Git on Debian-based systems
+    - name: Install Docker, Compose, and Git
       apt:
         name:
           - docker.io
@@ -45,7 +48,7 @@
     - name: Clone infra repo
       git:
         repo: "{{ infra_repo_url }}"
-        dest: "{{ deployment_dir }}"
+        dest: "{{ infra_repo_dir }}"
         version: "{{ repo_branch }}"
         force: yes
         accept_hostkey: yes
@@ -55,7 +58,7 @@
     - name: Clone authmat repo
       git:
         repo: "{{ authmat_repo_url }}"
-        dest: "{{ deployment_dir }}"
+        dest: "{{ authmat_repo_dir }}"
         force: yes
         accept_hostkey: yes
       register: authmat_clone
@@ -64,7 +67,7 @@
     - name: Clone dockeep repo
       git:
         repo: "{{ dockeep_repo_url }}"
-        dest: "{{ deployment_dir }}"
+        dest: "{{ dockeep_repo_dir }}"
         version: "{{ repo_branch }}"
         force: yes
         accept_hostkey: yes
@@ -72,100 +75,78 @@
 
 
     - name: Building and containerizing Infrastructure
-      community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/Infrastructure/AuthMat-DocKeep-Infrastructure"
-        files:
-          - "docker-compose.yml"
-        state: present
-        build: never
-        environment:
-          REDIS_IMAGE: "{{ REDIS_IMAGE }}"
-          REDIS_PORT: "{{ REDIS_PORT }}"
-          KAFKA_IMAGE: "{{ KAFKA_IMAGE }}"
-          KAFKA_PORT: "{{ KAFKA_PORT }}"
-
-        pull: missing
-        recreate: auto
-        remove_orphans: true
-        wait: true
-        wait_timeout: 300
-      register: compose_result
+      shell: docker compose up -d
+      environment:
+        REDIS_IMAGE: "{{ REDIS_IMAGE }}"
+        REDIS_PORT: "{{ REDIS_PORT }}"
+        KAFKA_IMAGE: "{{ KAFKA_IMAGE }}"
+        KAFKA_PORT: "{{ KAFKA_PORT }}"
+      args:
+        chdir: "{{ infra_repo_dir }}/AuthMat-DocKeep-Infrastructure"
 
 
     - name: Building and containerizing AuthMat
-      community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/AuthMat/"
-        files:
-          - "docker-compose.yml"
-        state: present
-        build: always
-        environment:
-          KAFKA_BOOTSTRAP_SERVERS: "{{ kafka_bootstrap_server }}"
-          REDIS_HOST: "{{ REDIS_HOST }}"
-          REDIS_PORT: "{{ REDIS_PORT }}"
+      shell: docker compose up -d
+      args:
+        chdir: "{{ authmat_repo_dir }}"
+      environment:
+        APP_PORT: 8080
+        KAFKA_BOOTSTRAP_SERVERS: "{{ kafka_bootstrap_server }}"
+        REDIS_HOST: "{{ REDIS_HOST }}"
+        REDIS_PORT: "{{ REDIS_PORT }}"
 
-          DB_NAME: "{{ AUTH_DB_NAME }}"
-          DB_URL: "{{ AUTH_DB_URL }}"
-          DB_USERNAME: "{{ AUTH_DB_USERNAME }}"
-          DB_PASSWORD: "{{ AUTH_DB_PASSWORD }}"
-          DB_DRIVER: "{{ AUTH_DB_DRIVER }}"
-          DB_MAX_POOL_SIZE: "{{ AUTH_DB_MAX_POOL_SIZE }}"
-          DB_MIN_IDLE_CONNECTIONS: "{{ AUTH_DB_MIN_IDLE_CONNECTIONS }}"
-          DB_IDLE_TIMEOUT_MS: "{{ AUTH_DB_IDLE_TIMEOUT_MS }}"
-          DB_MAX_LIFETIME_MS: "{{ AUTH_DB_MAX_LIFETIME_MS }}"
+        DB_IMAGE: "{{ AUTH_DB_IMAGE }}"
+        DB_PORT: "{{ AUTH_DB_PORT }}"
+        DB_NAME: "{{ AUTH_DB_NAME }}"
+        DB_URL: "{{ AUTH_DB_URL }}"
+        DB_USERNAME: "{{ AUTH_DB_USERNAME }}"
+        DB_PASSWORD: "{{ AUTH_DB_PASSWORD }}"
+        DB_DRIVER: "{{ AUTH_DB_DRIVER }}"
+        DB_MAX_POOL_SIZE: "{{ AUTH_DB_MAX_POOL_SIZE }}"
+        DB_MIN_IDLE_CONNECTIONS: "{{ AUTH_DB_MIN_IDLE_CONNECTIONS }}"
+        DB_IDLE_TIMEOUT_MS: "{{ AUTH_DB_IDLE_TIMEOUT_MS }}"
+        DB_MAX_LIFETIME_MS: "{{ AUTH_DB_MAX_LIFETIME_MS }}"
 
-          ACCESS_TOKEN_VALIDITY_MINUTES: "{{ ACCESS_TOKEN_VALIDITY_MINUTES }}"
-          ACCESS_TOKEN_HISTORY_TRACE: "{{ ACCESS_TOKEN_HISTORY_TRACE }}"
-          ACCESS_TOKEN_KEY_SIZE: "{{ ACCESS_TOKEN_KEY_SIZE }}"
-          ACCESS_TOKEN_KEY_ALGORITHM: "{{ ACCESS_TOKEN_KEY_ALGORITHM }}"
-          ACCESS_TOKEN_JWT_ALGORITHM: "{{ ACCESS_TOKEN_JWT_ALGORITHM }}"
-          ACCESS_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES: "{{ ACCESS_TOKEN_SIGNING_KEY_ROTATION_MINUTES }}"
+        ACCESS_TOKEN_VALIDITY_MINUTES: "{{ ACCESS_TOKEN_VALIDITY_MINUTES }}"
+        ACCESS_TOKEN_HISTORY_TRACE: "{{ ACCESS_TOKEN_HISTORY_TRACE }}"
+        ACCESS_TOKEN_KEY_SIZE: "{{ ACCESS_TOKEN_KEY_SIZE }}"
+        ACCESS_TOKEN_KEY_ALGORITHM: "{{ ACCESS_TOKEN_KEY_ALGORITHM }}"
+        ACCESS_TOKEN_JWT_ALGORITHM: "{{ ACCESS_TOKEN_JWT_ALGORITHM }}"
+        ACCESS_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES: "{{ ACCESS_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES }}"
 
-          REFRESH_TOKEN_VALIDITY_MINUTES: "{{ REFRESH_TOKEN_VALIDITY_MINUTES }}"
-          REFRESH_TOKEN_HISTORY_TRACE: "{{ REFRESH_TOKEN_HISTORY_TRACE }}"
-          REFRESH_TOKEN_KEY_SIZE: "{{ REFRESH_TOKEN_KEY_SIZE }}"
-          REFRESH_TOKEN_KEY_ALGORITHM: "{{ REFRESH_TOKEN_KEY_ALGORITHM }}"
-          REFRESH_TOKEN_JWT_ALGORITHM: "{{ REFRESH_TOKEN_JWT_ALGORITHM }}"
-          REFRESH_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES: "{{ REFRESH_TOKEN_SIGNING_KEY_ROTATION_MINUTES }}"
-        pull: missing
-        recreate: auto
-        remove_orphans: true
-        wait: true
-        wait_timeout: 300
-
+        REFRESH_TOKEN_VALIDITY_MINUTES: "{{ REFRESH_TOKEN_VALIDITY_MINUTES }}"
+        REFRESH_TOKEN_HISTORY_TRACE: "{{ REFRESH_TOKEN_HISTORY_TRACE }}"
+        REFRESH_TOKEN_KEY_SIZE: "{{ REFRESH_TOKEN_KEY_SIZE }}"
+        REFRESH_TOKEN_KEY_ALGORITHM: "{{ REFRESH_TOKEN_KEY_ALGORITHM }}"
+        REFRESH_TOKEN_JWT_ALGORITHM: "{{ REFRESH_TOKEN_JWT_ALGORITHM }}"
+        REFRESH_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES: "{{ REFRESH_TOKEN_SIGNING_KEY_ROTATION_RATE_MINUTES }}"
 
     - name: Building and containerizing DocKeep
-      community.docker.docker_compose_v2:
-        project_src: "{{ deployment_dir }}/DocKeep/"
-        files:
-          - "docker-compose.yml"
-        state: present
-        build: always
-        environment:
-          KAFKA_BOOTSTRAP_SERVERS: "{{ kafka_bootstrap_server }}"
-          REDIS_HOST: "{{ REDIS_HOST }}"
-          REDIS_PORT: "{{ REDIS_PORT }}"
+      shell: docker compose up -d
+      args:
+        chdir: "{{ dockeep_repo_dir }}"
+      environment:
+        APP_PORT: 8081
+        KAFKA_BOOTSTRAP_SERVERS: "{{ kafka_bootstrap_server }}"
+        REDIS_HOST: "{{ REDIS_HOST }}"
+        REDIS_PORT: "{{ REDIS_PORT }}"
 
-          DB_NAME: "{{ DOC_DB_NAME }}"
-          DB_URL: "{{ DOC_DB_URL }}"
-          DB_USERNAME: "{{ DOC_DB_USERNAME }}"
-          DB_PASSWORD: "{{ DOC_DB_PASSWORD }}"
-          DB_DRIVER: "{{ DOC_DB_DRIVER }}"
-          DB_MAX_POOL_SIZE: "{{ DOC_DB_MAX_POOL_SIZE }}"
-          DB_MIN_IDLE_CONNECTIONS: "{{ DOC_DB_MIN_IDLE_CONNECTIONS }}"
-          DB_IDLE_TIMEOUT_MS: "{{ DOC_DB_IDLE_TIMEOUT_MS }}"
-          DB_MAX_LIFETIME_MS: "{{ DOC_DB_MAX_LIFETIME_MS }}"
+        DB_IMAGE: "{{ DOC_DB_IMAGE }}"
+        DB_PORT: "{{ DOC_DB_PORT }}"
+        DB_NAME: "{{ DOC_DB_NAME }}"
+        DB_URL: "{{ DOC_DB_URL }}"
+        DB_USERNAME: "{{ DOC_DB_USERNAME }}"
+        DB_PASSWORD: "{{ DOC_DB_PASSWORD }}"
+        DB_DRIVER: "{{ DOC_DB_DRIVER }}"
+        DB_MAX_POOL_SIZE: "{{ DOC_DB_MAX_POOL_SIZE }}"
+        DB_MIN_IDLE_CONNECTIONS: "{{ DOC_DB_MIN_IDLE_CONNECTIONS }}"
+        DB_IDLE_TIMEOUT_MS: "{{ DOC_DB_IDLE_TIMEOUT_MS }}"
+        DB_MAX_LIFETIME_MS: "{{ DOC_DB_MAX_LIFETIME_MS }}"
 
-          AWS_ACCESS_KEY: "{{ AWS_ACCESS_KEY }}"
-          AWS_SECRET_KEY: "{{ AWS_SECRET_KEY }}"
-          AWS_REGION: "{{ AWS_REGION }}"
-          AWS_BUCKET_NAME: "{{ AWS_BUCKET_NAME }}"
-
-        pull: missing
-        recreate: auto
-        remove_orphans: true
-        wait: true
-        wait_timeout: 300
+        AWS_ACCESS_KEY: "{{ AWS_ACCESS_KEY }}"
+        AWS_SECRET_KEY: "{{ AWS_SECRET_KEY }}"
+        AWS_REGION: "{{ AWS_REGION }}"
+        AWS_BUCKET_NAME: "{{ AWS_BUCKET_NAME }}"
 
 
     - name: Verify services are running
