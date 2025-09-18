@@ -1,0 +1,16 @@
+- name: Ensure Docker is installed
+  apt:
+    name: docker.io
+    state: present
+  become: yes
+
+- name: Ensure Docker Compose is installed
+  apt:
+    name: docker-compose-plugin
+    state: present
+  become: yes
+
+- name: Ensure app-network exists
+  community.docker.docker_network:
+    name: app-network
+    state: present

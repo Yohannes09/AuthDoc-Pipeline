@@ -1,13 +1,18 @@
 services:
   redis:
+    container_name: redis
     restart: always
-    image: ${REDIS_IMAGE}
+    image: redis:latest
+    networks:
+      - app-network
     ports:
-      - "${REDIS_PORT}:6379"
+      - "6379:6379"
+    volumes:
+      - redis-data
 
   kafka:
     container_name: kafka
-    image: ${KAFKA_IMAGE}
+    image: bitnami/kafka:latest
     restart: unless-stopped
     environment:
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
@@ -18,11 +23,17 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
+    networks:
+      - app-network
     ports:
-      - "${KAFKA_PORT}:9092"
+      - "9092:9092"
     volumes:
-      - kafka_data:/bitnami/kafka
+      - kafka-data:/bitnami/kafka
+
+networks:
+  app-network:
+    external: true
 
 volumes:
-  kafka_data:
-    driver: local
+  redis-data:
+  kafka-data:
