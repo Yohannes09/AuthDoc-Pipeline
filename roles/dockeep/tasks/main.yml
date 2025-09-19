@@ -1,0 +1,28 @@
+- name: Ensure AuthMat directory exists on host
+  file:
+    path: "{{ dockeep_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy AuthMat docker-compose.yml to host
+  copy:
+    src: docker-compose.yml
+    dest: "{{ dockeep_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Building and containerizing DocKeep
+  shell: docker compose up -d
+  args:
+    chdir: "{{ dockeep_dir }}"
+  environment:
+    APP_PORT: 8081
+    KAFKA_BOOTSTRAP_SERVERS: "{{ KAFKA_BOOTSTRAP_SERVERS }}"
+    REDIS_HOST: "{{ REDIS_HOST }}"
+    REDIS_PORT: "{{ REDIS_PORT }}"
+    DB_NAME: "{{ DOC_DB_NAME }}"
+    DB_USERNAME: "{{ DOC_DB_USERNAME }}"
+    DB_PASSWORD: "{{ DOC_DB_PASSWORD }}"
+    AWS_REGION: "{{ AWS_REGION }}"
+    AWS_BUCKET_NAME: "{{ AWS_BUCKET_NAME }}"

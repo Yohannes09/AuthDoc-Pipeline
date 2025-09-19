@@ -1,0 +1,3 @@
+DOC_DB_NAME: dockeep
+AWS_REGION: us-east-1
+AWS_BUCKET: dockeep
