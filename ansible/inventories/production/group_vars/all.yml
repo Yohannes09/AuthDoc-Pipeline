@@ -1,0 +1,5 @@
+docker_daemon_log_max_size: "50m"
+docker_daemon_log_max_file: "3"
+jvm_nofile_limit: 65536
+cloudwatch_log_retention_days: 30
+timezone: "UTC"
