@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ansible/playbooks
+
+    steps:
+      - uses: actions/checkout@v4
