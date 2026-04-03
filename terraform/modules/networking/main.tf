@@ -10,17 +10,17 @@ resource "aws_vpc" "authmat_dockeep_vpc" {
 resource "aws_subnet" "authmat_subnet" {
   vpc_id = aws_vpc.authmat_dockeep_vpc.id
   cidr_block = var.authmat_subnet_cidr
-  availability_zone = ""
+  availability_zone = var.az
 
   tags = {
     Name = "${var.env}-authmat-subnet"
   }
 }
-//TODO: figure out best way to add availability zone (i.e., hardcoded or var)
+
 resource "aws_subnet" "dockeep_subnet" {
   vpc_id = aws_vpc.authmat_dockeep_vpc.id
   cidr_block = var.dockeep_subnet_cidr
-  availability_zone = ""
+  availability_zone = var.az
 
   tags = {
     Name = "${var.env}-dockeep-subnet"

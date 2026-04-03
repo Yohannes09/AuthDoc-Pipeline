@@ -1,4 +1,4 @@
-resource "aws_instance" "authmat_ec2" {
+resource "aws_instance" "dockeep_ec2" {
   ami = var.ubuntu
   instance_type = var.instance_type
   availability_zone = var.az
@@ -9,6 +9,6 @@ resource "aws_instance" "authmat_ec2" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "${var.env}-authmat-ec2"
+    Name = "${var.env}-dockeep-ec2"
   }
 }

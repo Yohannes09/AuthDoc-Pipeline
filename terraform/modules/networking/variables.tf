@@ -17,3 +17,8 @@ variable "env" {
 variable "ssh_allowed_cidr" {
   type = string
 }
+
+variable "az" {
+  type = string
+  description = "Availability zone for subnets"
+}
