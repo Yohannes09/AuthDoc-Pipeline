@@ -24,6 +24,12 @@ module "networking" {
   ssh_allowed_cidr    = var.ssh_allowed_cidr_dev
 }
 
+module "kms" {
+  source = "../../modules/kms"
+
+  env = "dev"
+}
+
 module "authmat" {
   source = "../../modules/authmat"
 
@@ -33,6 +39,7 @@ module "authmat" {
   sg_id         = module.networking.sg_id
   subnet_id     = module.networking.authmat_subnet_id
   ubuntu        = data.aws_ami.ubuntu.id
+  iam_instance_profile = module.kms.kms_sign_instance_profile_arn
 }
 
 module "dockeep" {

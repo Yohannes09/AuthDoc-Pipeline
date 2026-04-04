@@ -7,6 +7,7 @@ resource "aws_instance" "authmat_ec2" {
   subnet_id = var.subnet_id
   vpc_security_group_ids = [var.sg_id]
   associate_public_ip_address = true
+  iam_instance_profile = var.iam_instance_profile
 
   tags = {
     Name = "${var.env}-authmat-ec2"

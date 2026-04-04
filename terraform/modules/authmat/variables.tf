@@ -1,23 +1,13 @@
-variable "ubuntu" {
-  type = string
-}
+variable "ubuntu" { type = string }
 
-variable "env" {
-  type = string
-}
+variable "env" { type = string }
 
-variable "subnet_id" {
-  type = string
-}
+variable "subnet_id" { type = string }
 
-variable "instance_type" {
-  type = string
-}
+variable "instance_type" { type = string }
 
-variable "sg_id" {
-  type = string
-}
+variable "sg_id" { type = string }
 
-variable "az" {
-  type = string
-}
+variable "az" { type = string }
+
+variable "iam_instance_profile" { type = string }
