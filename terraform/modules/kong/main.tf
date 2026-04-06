@@ -1,4 +1,5 @@
-resource "aws_instance" "authmat_ec2" {
+
+resource "aws_instance" "kong_ec2" {
   ami = var.os_ami_id
   instance_type = var.instance_type
   availability_zone = var.az
@@ -7,7 +8,6 @@ resource "aws_instance" "authmat_ec2" {
   subnet_id = var.subnet_id
   vpc_security_group_ids = [var.sg_id]
   associate_public_ip_address = true
-  iam_instance_profile = var.iam_instance_profile
 
-  tags = { Name = "${var.env}-authmat-ec2" }
+  tags = { Name = "${var.env}-kong-ec2" }
 }

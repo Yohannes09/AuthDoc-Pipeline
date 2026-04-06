@@ -1,4 +1,4 @@
-variable "ubuntu" {
+variable "os_ami_id" {
   type = string
 }
 
