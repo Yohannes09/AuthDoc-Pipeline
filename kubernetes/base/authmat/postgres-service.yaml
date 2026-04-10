@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: authmat-db-service-h
+  labels:
+    app: authmat-db
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  clusterIP: None  # This makes it "Headless", meaning it doesn't need a single load balance IP; it just creates DNS entries for each pod
+  selector:
+    app: authmat-db
