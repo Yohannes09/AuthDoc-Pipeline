@@ -1,16 +1,10 @@
-variable "vpc_cidr" {
-  type = string
-}
+variable "env" { type = string}
 
-variable "kong_subnet_cidr" { type = string }
-variable "authmat_subnet_cidr" { type = string }
-variable "dockeep_subnet_cidr" { type = string }
+variable "vpc_cidr" { type = string }
+variable "availability_zone_count"{ type = number }
+variable "availability_zones" { type = list(number) }
 
-variable "env" { type = string }
-
-variable "ssh_allowed_cidr" { type = string }
-
-variable "az" {
-  type = string
-  description = "Availability zone for subnets"
-}
+variable "public_subnet_cidrs" { type = list(string) }
+variable "node_subnet_cidrs" { type = list(string) }
+variable "control_plane_subnet_cidrs" { type = list(string) }
+variable "data_subnet_cidrs" { type = list(string) }
