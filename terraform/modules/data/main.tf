@@ -14,6 +14,13 @@ resource "aws_security_group_rule" "rds_ingress_from_nodes" {
   source_security_group_id = var.worker_node_sg_id
 }
 
+resource "aws_security_group_rule" "rds_egress" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.rds.id
+}
 
 
 # TODO - subnet group must contain subnets in at least two AZs even when running a single AZ RDS

@@ -93,8 +93,8 @@ resource "aws_iam_instance_profile" "kms_sign_profile" {
 
 resource "aws_iam_policy" "kms_verify" {
   policy = jsonencode({
-    "version" : "2012-10-17",
-    "statement" : [{
+    "Version" : "2012-10-17",
+    "Statement" : [{
       "Sid" : "",
       "Effect" : "Allow",
       "Action" : [

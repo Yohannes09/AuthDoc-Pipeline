@@ -16,7 +16,7 @@ module "kms" {
 }
 
 module "networking" {
-  source = "../../modules/networking"
+  source = "../../modules/vpc"
 
   availability_zone_count = 0
   availability_zones = []
