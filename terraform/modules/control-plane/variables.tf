@@ -1,4 +1,6 @@
 variable "env" { type = string }
+variable "kms_deletion_window_days" {}
+variable "log_retention_days" {}
 variable "vpc_id" { type = string }
 variable "worker_node_sg_id" { type = string }
 variable "operator_cidr" { type = string }

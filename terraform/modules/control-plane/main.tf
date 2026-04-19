@@ -1,3 +1,54 @@
+
+resource "aws_kms_key" "eks_secrets" {
+  description = "${var.env} EKS Secrets envelope encryption"
+  deletion_window_in_days = var.kms_deletion_window_days
+  enable_key_rotation = true
+
+  tags = { Name = "${var.env}-eks-secrets-key"}
+}
+
+resource "aws_kms_alias" "eks_secrets" {
+  name = "alias/${var.env}-eks-secrets"
+  target_key_id = aws_kms_key.eks_secrets.id
+}
+
+
+
+resource "aws_cloudwatch_log_group" "eks_cluster" {
+  name = "/aws/eks/${var.env}-cluster/cluster"
+  retention_in_days = var.log_retention_days
+  kms_key_id = aws_kms_key.eks_secrets.id
+  tags = { Name = "${var.env}-eks-cluster-logs" }
+}
+
+
+
+resource "aws_iam_role" "cluster" {
+  name = "${var.env}-eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2017-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "eks.amazonaws.com"}
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_policy" {
+  role       = aws_iam_role.cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_resource_controller" {
+  role       = aws_iam_role.cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+}
+
+
+
+
 resource "aws_security_group" "control_plane_sg" {
   name = "${var.env}-control-plane-sg"
   vpc_id = var.vpc_id
@@ -79,7 +130,7 @@ resource "aws_iam_role_policy_attachment" "control_plane_rta" {
 }
 
 resource "aws_iam_instance_profile" "control_plane_profile" {
-  name = "${var.env}-control-plane-profile"
+  name = "${var.env}-control-plane-6profile"
   role = aws_iam_role.control_plane_role.name
 }
 
