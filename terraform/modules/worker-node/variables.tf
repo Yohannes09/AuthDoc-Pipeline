@@ -9,6 +9,9 @@ variable "max_size" { type = number }
 variable "min_size" { type = number }
 variable "vpc_id" { type = string }
 variable "cluster_sg_id" { type = string }
+variable "ebs_key_deletion_window_days" { type = number }
+variable "ebs_key_enable_key_rotation" { type = bool default = false }
+variable "worker_volume_size_gb" { type = number default = 10 }
 
 
 
