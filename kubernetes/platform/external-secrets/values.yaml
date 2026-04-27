@@ -1,0 +1,5 @@
+installCRDs: true
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::myaccountid:role/external-secrets-irsa # TODO myaccountid is a placeholder
